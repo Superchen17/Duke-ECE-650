@@ -1,0 +1,6 @@
+.vscode
+*.o
+*.so
+*~
+*.zip
+*.gz
