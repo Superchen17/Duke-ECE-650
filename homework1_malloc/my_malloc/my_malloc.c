@@ -315,6 +315,8 @@ void bf_free(void *ptr){
   ff_free(ptr);
 }
 
+//-------------------- performance metrics --------------------//
+
 unsigned long get_data_segment_size() {
   return sizeAllocated;
 }

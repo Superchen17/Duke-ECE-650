@@ -1,6 +1,13 @@
+# code
 .vscode
 *.o
 *.so
 *~
 *.zip
 *.gz
+
+# latex
+*.aux
+*.fdb_latexmk
+*.fls
+*.log

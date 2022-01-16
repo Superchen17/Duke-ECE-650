@@ -1,0 +1,145 @@
+\documentclass[12pt, letterpaper]{article}
+
+\usepackage[a4paper, total={6.5in, 9in}]{geometry}
+\usepackage{listings}
+\usepackage{indentfirst}
+\usepackage{slashbox}
+
+\lstset{language=C}  
+
+\title{A Custom Malloc Library}
+\author{Anran Chen (ac692)}
+\date{}
+
+\begin{document}
+  \maketitle
+  \begin{abstract}
+    The aim of this study is to propose an implementation of C standard Malloc/Free library. 
+    The algorithm is built upon a modified doubly linked list data structure. 
+    The implementation is a satistactory effort to replicate the C standard libary, 
+    but suffereing from relatively slow execution speed and high memory overhead. 
+  \end{abstract}
+  
+  \section*{Implementation Details}
+    The allocated heap space of the program is devided into segments. 
+    Each segment contains two parts, namely the metadata and the storage space. 
+    The storage space of a segment is used to store the actual data, 
+    and the metadata is used to keep information regarding the segment's relative location, size and availability.
+
+    The metadata section is a C struct as follows. 
+    The segment size, availability, upstream and downstream free segments (prev, next)
+    and neighboring segments (left, right) are stored accordingly. 
+
+    \begin{lstlisting}[frame=single]
+      struct _metadata {
+        size_t dataSize;
+        bool occupied;
+        struct _metadata* prev;
+        struct _metadata* next;
+        struct _metadata* left;
+        struct _metadata* right;
+      };
+      typedef struct _metadata Metadata;
+
+    \end{lstlisting}
+
+    There are two doubly linked lists in place to track the segments aforementioned, 
+    namely the physical list and the free list.
+    The physical list tracks the segments as they are laid out in the memory,
+    while the free list tracks the available segments disregarding their physical arrangements. 
+
+    When an arbitrary size of memory is requested, 
+    the free list is searched first to look for any suitable deallocated segments according to the allocation policy.
+    If none are available, a new segment is created using C standard sbrk() library. 
+    Otherwise, depending on if the chosen segment is splitable, 
+    the entire segment or a portion of the segment will be allocated.
+
+    A segment is defined ``splitable'' if it has enough space for the requested data,
+    in addition to an extra metadata block. If the segment is not deemed splitable,
+    the entire segment is allocated for the request.
+    Otherwise, the segment will be splited into two, 
+    with the first portion fulfilling the request, and the second standing by as free space.
+
+    When a segment is freed, it is coalesced with its neighboring blocks 
+    should they be free as well. This would defragment the freed memory space
+    for more optimized memory allocation performed later. 
+
+  \section*{Performances}
+    \subsection*{Experimentation}
+      The library is implemented in C, and executed on a Windows 10 WSL with an Intel i7-7700HQ CPU and $8$GB of RAM.
+      Three sets of experiments are performed to measure the outcome: 
+      equal size alloc, small random size alloc and large random size alloc.
+      The number of iterations and the block sizes are according to the default values.
+      The execution times and fragmentation proportions are shown in table \ref{table:result}. 
+
+      \begin{table}[h]
+        \begin{center} 
+          \begin{tabular}{|| c | c | c | c | c ||}
+            \hline
+            & \multicolumn{2}{|c|}{First Fit} & \multicolumn{2}{|c|}{Best Fit}\\
+            \hline
+            \backslashbox & Speed (s) & Fragmentation & Speed (s) & Fragmentation\\
+            \hline
+            Equal Size & 1.65 & 0.45 & 1.53 & 0.45 \\ 
+            \hline
+            Small Random Size & 5.10 & 0.05 & 3.24 & 0.02 \\ 
+            \hline
+            Large Random Size & 36.32 & 0.12 & 83.39 & 0.04 \\ 
+            \hline
+          \end{tabular}
+          \caption{Performance results}
+          \label{table:result}
+        \end{center}
+      \end{table}
+
+    \subsection*{Speed}
+      For equal size allocations, the execution speeds are as fast and close as expected.
+      First-fit policy relies on a greedy approach to search for the free segment,
+      thus promises a fast execution. 
+      While best-fit policy has special conditions to check for equality between the requested size and the freed segment,
+      and allocates immediately if the condition fulfills. 
+      This allows the library to break out from exhaustive searching, further optimizing its execution. 
+
+      For small size random allocations, the executions speeds for both policies are close,
+      but significantly slower than those from equal size allocations due to the unpredictable allocation requests.
+      Best-fit policy executes moderately faster than first-fit, 
+      as the result of its better selection choice by seleting the closest free segment possible,
+      and not wasting extra cycles to split and arrange the segment layouts.
+
+      Both policies are not suitable for large size random allocations, 
+      as the times taken are unrealistic for normal computation demand comparing to its C standard malloc counterpart. 
+      First-fit policy performs better, as the greedy allocation does not travese the entire free list,
+      as opposed to the exhaustive searching strategy, when the free list too exceedingly varying to search for the best fit. 
+
+
+    \subsection*{Fragmentation}
+      Both policies perform the same under equal size allocation, as the allocation requests are all identical, 
+      the segment choices would also be identical disregarding different approaches.
+
+      For both random size allocations, besf-fit policy surpasses first-fit policy, 
+      as the former has a more optimized segment selection strategy, 
+      reducing the need to split a bigger segment and leaving the rest of it too small to be requested. 
+      The effect is especially conspicuous for larget random size allocation, 
+      where the latter only results in a third of the fragmentation of its former's. 
+
+  \section*{Discussion and Conclusion}
+    It is discovered that there is a tradeoff between the speed of allocation and the integrity of the memory space.
+    First-fit policy is suitable for a series of more varying and unpredictable memory requests,
+    or when speed is more important than memory integrity. 
+    Whereas the best-fit policy should be chosen where the requested sizes are moderately consistent,
+    or when the memory should be preserved as clean as possible. 
+    However, both allocation policies are too slow to be considered for practical usage. 
+
+  \section*{Possible Future Work}
+    Although this custom implementation replicates the functionality of its C standard counterpart,
+    it sufferes from two significant drawbacks: the execution speed and the memory overhead.
+    To improve the execution speed, alignment can be used to pre-fragment the segments,
+    which removes a large proportion of clock cycles wasted to promptly split and coalesce blocks during execution as in the current implementation.
+    Concurrency is also a promising to speed up searching for free segment, as opposed to searching linearly. 
+
+    A large portion of the memory is consumed by the segments' metadata. 
+    The currently implementation has a metadata size of $48$ bytes,
+    exceedingly extravagant comparing to its C standard implementation. 
+    Smaller size primitive data types and less pointers can be used to reduce this overhead.      
+
+\end{document}
