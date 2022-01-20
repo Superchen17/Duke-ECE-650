@@ -24,11 +24,9 @@
     The allocated heap space of the program is devided into segments. 
     Each segment contains two parts, namely the metadata and the storage space. 
     The storage space of a segment is used to store the actual data, 
-    and the metadata is used to keep information regarding the segment's relative location, size and availability.
+    and the metadata is used to keep information regarding the segment's relative location, size and availability,
+    which is a struct as follows
 
-    The metadata section is a C struct as follows. 
-    The segment size, availability, upstream and downstream free segments (prev, next)
-    and neighboring segments (left, right) are stored accordingly. 
 
     \begin{lstlisting}[frame=single]
       struct _metadata {
@@ -36,23 +34,22 @@
         bool occupied;
         struct _metadata* prev;
         struct _metadata* next;
-        struct _metadata* left;
-        struct _metadata* right;
       };
       typedef struct _metadata Metadata;
 
     \end{lstlisting}
 
-    There are two doubly linked lists in place to track the segments aforementioned, 
-    namely the physical list and the free list.
-    The physical list tracks the segments as they are laid out in the memory,
-    while the free list tracks the available segments disregarding their physical arrangements. 
+    A segment can have two status: occupied or free. 
+    Once freed, the segment is added to a doubly linked list call the free list.
+    The free list tracks all freed segments for future use, ranked by each one's physical address.
 
     When an arbitrary size of memory is requested, 
     the free list is searched first to look for any suitable deallocated segments according to the allocation policy.
     If none are available, a new segment is created using C standard sbrk() library. 
     Otherwise, depending on if the chosen segment is splitable, 
     the entire segment or a portion of the segment will be allocated.
+    If, however, the sbrk() is unsuccessful due to the full occupancy of the heap space,
+    a null pointer will be returned. 
 
     A segment is defined ``splitable'' if it has enough space for the requested data,
     in addition to an extra metadata block. If the segment is not deemed splitable,
@@ -60,8 +57,9 @@
     Otherwise, the segment will be splited into two, 
     with the first portion fulfilling the request, and the second standing by as free space.
 
-    When a segment is freed, it is coalesced with its neighboring blocks 
-    should they be free as well. This would defragment the freed memory space
+    When a segment is freed and added to the free list, 
+    it is coalesced with its neighboring blocks if they are physically adjacent. 
+    This would defragment the freed memory space
     for more optimized memory allocation performed later. 
 
   \section*{Performances}
@@ -80,11 +78,11 @@
             \hline
             \backslashbox & Speed (s) & Fragmentation & Speed (s) & Fragmentation\\
             \hline
-            Equal Size & 1.65 & 0.45 & 1.53 & 0.45 \\ 
+            Equal Size & 17.61 & 0.45 & 16.43 & 0.45 \\ 
             \hline
-            Small Random Size & 5.10 & 0.05 & 3.24 & 0.02 \\ 
+            Small Random Size & 20.49 & 0.07 & 4.12 & 0.02 \\ 
             \hline
-            Large Random Size & 36.32 & 0.12 & 83.39 & 0.04 \\ 
+            Large Random Size & 69.71 & 0.09 & 98.94 & 0.04 \\ 
             \hline
           \end{tabular}
           \caption{Performance results}
@@ -93,24 +91,25 @@
       \end{table}
 
     \subsection*{Speed}
-      For equal size allocations, the execution speeds are as fast and close as expected.
+      For equal size allocations, both policies display similar performances. 
       First-fit policy relies on a greedy approach to search for the free segment,
       thus promises a fast execution. 
       While best-fit policy has special conditions to check for equality between the requested size and the freed segment,
       and allocates immediately if the condition fulfills. 
       This allows the library to break out from exhaustive searching, further optimizing its execution. 
 
-      For small size random allocations, the executions speeds for both policies are close,
-      but significantly slower than those from equal size allocations due to the unpredictable allocation requests.
-      Best-fit policy executes moderately faster than first-fit, 
-      as the result of its better selection choice by seleting the closest free segment possible,
-      and not wasting extra cycles to split and arrange the segment layouts.
+      For small size random allocations, best-fit policy executes moderately faster than first-fit.  
+      In this case, the first-fit policy would split the closest available segment,
+      while the best-fit policy traversing through the free list. 
+      If the free list is relatively short, although traversing is of linear complexity,
+      it still has a better performance than the greedy approach,
+      which would spend considerable time splitting and rearranging segments each time upon a request. 
 
       Both policies are not suitable for large size random allocations, 
       as the times taken are unrealistic for normal computation demand comparing to its C standard malloc counterpart. 
       First-fit policy performs better, as the greedy allocation does not travese the entire free list,
-      as opposed to the exhaustive searching strategy, when the free list too exceedingly varying to search for the best fit. 
-
+      as opposed to the exhaustive searching strategy, 
+      when the free list too exceedingly varying to search for the best fit. 
 
     \subsection*{Fragmentation}
       Both policies perform the same under equal size allocation, as the allocation requests are all identical, 
@@ -135,10 +134,13 @@
     it sufferes from two significant drawbacks: the execution speed and the memory overhead.
     To improve the execution speed, alignment can be used to pre-fragment the segments,
     which removes a large proportion of clock cycles wasted to promptly split and coalesce blocks during execution as in the current implementation.
+    A second doubly linked list could be introduced to maintain the physical arrangement of the segments,
+    while the free list could be appended to the end, instead of inserted according to the segment's address.
+    This would reduce the free operation to a constant time complexity. 
     Concurrency is also a promising to speed up searching for free segment, as opposed to searching linearly. 
 
     A large portion of the memory is consumed by the segments' metadata. 
-    The currently implementation has a metadata size of $48$ bytes,
+    The currently implementation has a metadata size of $32$ bytes,
     exceedingly extravagant comparing to its C standard implementation. 
     Smaller size primitive data types and less pointers can be used to reduce this overhead.      
 
