@@ -1,0 +1,19 @@
+# code
+.vscode
+*.o
+*.so
+*~
+*.zip
+*.gz
+
+# tests
+thread_test
+thread_test_malloc_free
+thread_test_malloc_free_change_thread
+thread_test_measurement
+
+# latex
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
