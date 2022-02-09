@@ -1,0 +1,8 @@
+# object and temporary files
+*.o
+*~
+
+# executables
+player
+server
+ringmaster
