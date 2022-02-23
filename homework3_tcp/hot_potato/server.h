@@ -2,6 +2,7 @@
 #define __SERVER_H__
 
 #include "potato.h"
+#include "clientInfo.h"
 
 #include <iostream>
 #include <cstring>
@@ -60,7 +61,7 @@ class Server{
     void try_recv(int sockfd, void *buf, int len, int flags);
 
     void try_connect(int targetFd, const char* hostname, const char* port);
-    int accept_connection();
+    ClientInfo* accept_connection();
 
     void create_socket_and_listen(const char* hostname, const char* port);
     int create_socket_and_connect(const char* hostname, const char* port);    

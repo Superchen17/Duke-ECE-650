@@ -42,6 +42,7 @@ class Ringmaster: public Server{
       potatoHops(potatoHops){
         std::cout << "Potato Ringmaster" << std::endl;
         std::cout << "Players = " << this->numPlayers << std::endl;
+        std::cout << "Hops = " << this->potatoHops << std::endl;
 
         this->create_hub();  // get player socket id, host & port; assign player id
         this->send_neighbor_info(); // send each player its left neighbor's host & port

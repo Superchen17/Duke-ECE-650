@@ -1,4 +1,5 @@
 #include "ringmaster.h"
+#include "clientInfo.h"
 
 Ringmaster::~Ringmaster(){
   for(int i = 0; i < numPlayers; i++){
@@ -8,7 +9,9 @@ Ringmaster::~Ringmaster(){
 
 void Ringmaster::create_hub(){
   for(int i = 0; i < this->numPlayers; i++){
-    int playerFd = this->accept_connection();
+    ClientInfo* clientInfo = this->accept_connection();
+    int playerFd = clientInfo->get_clientFd();
+
     this->connInfos.push_back(playerFd);
     this->try_send(playerFd, &(playerCounter), sizeof(playerCounter), 0);
     this->try_send(playerFd, &(this->numPlayers), sizeof(this->numPlayers), 0);
@@ -17,10 +20,8 @@ void Ringmaster::create_hub(){
     this->try_recv(playerFd, &(_port), sizeof(_port), MSG_WAITALL);
     this->connPorts.push_back(_port);
 
-    char _ip[100];
-    this->try_recv(playerFd, _ip, 100, MSG_WAITALL);
-    std::string ipStr(_ip);
-    this->connIps.push_back(ipStr);
+    this->connIps.push_back(clientInfo->get_clientAddr());
+    delete clientInfo;
 
     std::cout << "Player " << playerCounter << " is ready to play" << std::endl;
 
@@ -43,8 +44,9 @@ void Ringmaster::send_neighbor_info(){
       leftPort = this->connPorts[i - 1];
     }
 
+    const char* leftIpChars = leftIp.c_str();
     this->try_send(this->connInfos[i], &leftConnInfo, sizeof(leftConnInfo), 0);   
-    this->try_send(this->connInfos[i], leftIp.c_str(), 100, 0);    
+    this->try_send(this->connInfos[i], leftIpChars, 100, 0);    
     this->try_send(this->connInfos[i], &leftPort, sizeof(leftPort), 0);
   }
 }
@@ -68,19 +70,19 @@ void Ringmaster::play_game(){
   this->toss_potato(this->connInfos[randId], potato);
 
   // create select from all players
-  fd_set readfds;
-  FD_ZERO(&readfds);
+  fd_set fdSet;
+  FD_ZERO(&fdSet);
   for (int i = 0; i < this->numPlayers; i++) {
-    FD_SET(this->connInfos[i], &readfds);
+    FD_SET(this->connInfos[i], &fdSet);
   }
-  status = select(this->connInfos[this->numPlayers - 1] + 1, &readfds, NULL, NULL, NULL);
+  status = select(this->connInfos[this->numPlayers - 1] + 1, &fdSet, NULL, NULL, NULL);
   if(status == -1){
     throw CustomException("error: cannot select");
   }
 
   // wait for potato from "it"
   for (int i = 0; i < this->numPlayers; i++) {
-    if (FD_ISSET(this->connInfos[i], &readfds)) {
+    if (FD_ISSET(this->connInfos[i], &fdSet)) {
       this->catch_potato(this->connInfos[i], potato);
       break;
     }

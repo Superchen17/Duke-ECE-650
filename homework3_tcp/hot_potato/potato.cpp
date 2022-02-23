@@ -2,6 +2,30 @@
 
 #include <iostream>
 
+Potato::Potato(){
+  this->hops = 0;
+  this->counter = 0;
+  for(int i = 0; i < MAX_HOPS; i++){
+    this->route[i] = 0;
+  }
+}
+
+Potato::Potato(int _hops){
+  this->hops  = _hops;
+  this->counter = 0;
+  for(int i = 0; i < MAX_HOPS; i++){
+    this->route[i] = 0;
+  }
+}
+
+Potato::Potato(const Potato& rhs){
+  this->hops = rhs.hops;
+  this->counter = rhs.counter;
+  for(int i = 0; i < MAX_HOPS; i++){
+    this->route[i] = rhs.route[i];
+  }
+}
+
 int Potato::get_hops(){
   return this->hops;
 }

@@ -12,16 +12,11 @@ class Potato {
     int route[MAX_HOPS];
 
   public:
-    Potato():hops(0), counter(0){ 
-      memset(this->route, 0, MAX_HOPS); 
-    }
-
-    Potato(int _hops): hops(_hops), counter(0){
-      memset(this->route, 0, MAX_HOPS); 
-    }
+    Potato();
+    Potato(int _hops);
+    Potato(const Potato& rhs);
 
     int get_hops();
-
     void decrement_hop();
     void append_route(int newId);
     void print_trace();

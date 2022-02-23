@@ -105,7 +105,7 @@ void Server::try_listen(){
   }
 }
 
-int Server::accept_connection(){
+ClientInfo* Server::accept_connection(){
 
   struct sockaddr_storage socketAddr;
   socklen_t socketAddrLen = sizeof(socketAddr);
@@ -115,7 +115,13 @@ int Server::accept_connection(){
   }
 
   this->highestFd = clientConnFd;
-  return clientConnFd;
+
+  sockaddr_in_t* s = (sockaddr_in_t*)&socketAddr;
+  std::string clientIp = inet_ntoa(s->sin_addr);
+  int clientPort = ntohs(s->sin_port);
+
+  ClientInfo* clientInfo = new ClientInfo(clientConnFd, clientIp, clientPort);
+  return clientInfo;
 }
 
 void Server::try_connect(int targetFd, const char* hostname, const char* port){
@@ -171,14 +177,14 @@ void Server::get_random_port(addrinfo_t** hostInfoList){
 
 
 void Server::toss_potato(int fd, Potato& potato){
-  int status = send(fd, &potato, sizeof(potato), 0);
+  int status = send(fd, &potato, sizeof(potato), MSG_WAITALL);
   if (status != sizeof(potato)) {
     throw CustomException("error: sent unexpected potato");
   }
 }
 
 void Server::catch_potato(int fd, Potato& potato){
-  int status = recv(fd, &potato, sizeof(potato), 0);
+  int status = recv(fd, &potato, sizeof(potato), MSG_WAITALL);
   if (status != sizeof(potato) && status != 0) {
     throw CustomException("error: received unexpected potato");
   }

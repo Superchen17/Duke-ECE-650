@@ -22,7 +22,7 @@ class Player: public Server{
     static void validate_args(int argc, char** argv);
 
     Player(const char* hostname, const char* port): 
-      Server(hostname, NULL),
+      Server("0.0.0.0", NULL),
       id(-1),
       numPlayers(-1),
       connInfoLeft(-1),

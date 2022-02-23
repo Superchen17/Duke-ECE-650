@@ -1,4 +1,6 @@
 #include "player.h"
+#include "clientInfo.h"
+
 #include <stdio.h>
 
 void Player::validate_args(int argc, char** argv){
@@ -27,9 +29,6 @@ void Player::acquire_self_info_from_master(){
   int myPort = this->get_my_port();
   this->try_send(this->masterSocketFd, &myPort, sizeof(myPort), 0);
 
-  std::string myIp = this->get_my_ip();
-  this->try_send(this->masterSocketFd, myIp.c_str(), 100, 0);
-
   std::cout << "Connected as player " << this->id 
     << " out of " << this->numPlayers << " total players\n";
 }
@@ -48,7 +47,11 @@ void Player::connect_and_accept_neighbors(){
   sprintf(portStr, "%d", this->portLeft);
 
   this->connInfoLeft = this->create_socket_and_connect(this->ipLeft.c_str(), portStr);
-  this->acceptedFd = this->accept_connection();
+  
+  ClientInfo* clientInfo = this->accept_connection();
+  this->acceptedFd = clientInfo->get_clientFd();
+
+  delete clientInfo;
 }
 
 void Player::try_send_receive_neighbor_messages(){
@@ -70,7 +73,7 @@ void Player::try_send_receive_neighbor_messages(){
 }
 
 void Player::play_potato(){
-  fd_set readfds;
+  fd_set fdSet;
   int leftId, rightId;
   if(this->id == 0){
     leftId = this->numPlayers - 1;
@@ -91,18 +94,18 @@ void Player::play_potato(){
 
   while (true) {
     Potato potato; 
-    FD_ZERO(&readfds);
+    FD_ZERO(&fdSet);
     for (int i = 0; i < 3; i++) {
-      FD_SET(fds[i], &readfds);
+      FD_SET(fds[i], &fdSet);
     }
 
-    int status = select(maxFd, &readfds, NULL, NULL, NULL);
+    int status = select(maxFd, &fdSet, NULL, NULL, NULL);
     if (status == -1) {
       throw CustomException("error: cannot select");
     }
 
     for (int i = 0; i < 3; i++) {
-      if (FD_ISSET(fds[i], &readfds)) {
+      if (FD_ISSET(fds[i], &fdSet)) {
         this->catch_potato(fds[i], potato);
         break;
       }
