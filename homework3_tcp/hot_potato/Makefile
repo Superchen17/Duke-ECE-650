@@ -17,7 +17,7 @@ server: server.o potato.o clientInfo.o
 
 .PHONY: clean 
 clean:
-	rm -rf *.o *~ ringmaster player
+	rm -rf *.o *~ ringmaster player .vscode
 
 server.o: server.h potato.h clientInfo.h
 ringmaster.o: server.h ringmaster.h potato.h

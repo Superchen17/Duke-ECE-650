@@ -110,7 +110,7 @@ void Ringmaster::validate_args(int argc, char** argv){
 
   //check num players
   int numPlayers = atoi(argv[2]);
-  if(numPlayers < 1){
+  if(numPlayers < 2){
     throw CustomException("error: number of players must be bigger than 1");
   }
 
