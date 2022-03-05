@@ -1,9 +1,12 @@
 # Basketball Statistics - Database Programming
 
+- [pqxx version](pqxx), plain SQL interface implemented in C++
+- [SQLAlchemy version](orm), object relation mapping(orm) interface implemented in Python
 ## System Requirements
-Ubuntu 20.04
+Ubuntu 20.04 with Python3.8+
 
 ## Development Setup
+### Local PostgreSQL
 1. update system, install postgres dev tools and C++ API
 ```
 sudo apt install postgresql postgresql-contrib libpqxx-dev
@@ -43,4 +46,21 @@ CREATE DATABASE "ACC_BBALL";
 ```
 \l
 exit
+```
+
+### Python
+1. go to **`orm/`** and create a Python virtual environment
+```
+cd orm
+python3 -m venv venv
+```
+
+2. activate the virtual environment and download dependencies
+```
+source venv/bin/activate
+pip install -r requirements.txt
+```
+3. (optional) deactivate virtual environment on exit
+```
+deactivate
 ```
