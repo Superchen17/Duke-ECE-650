@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-O3
+CFLAGS=-O3 -std=c++11
 EXTRAFLAGS=-lpqxx -lpq
 SRCS=$(wildcard *.cpp)
 OBJS=$(patsubst %.cpp, %.o, $(SRCS))

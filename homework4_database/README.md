@@ -1,9 +1,14 @@
 # Basketball Statistics - Database Programming
 
-- [pqxx version](pqxx), plain SQL interface implemented in C++
+- pqxx version: plain SQL interface implemented in C++
+  - [stable pqxx version](pqxx_ubuntu18), stable version for autograder(Ubuntu 18.04)
+  - [beta pqxx version](pqxx_ubuntu20), version for Ubuntu 20.04
 - [SQLAlchemy version](orm), object relation mapping(orm) interface implemented in Python
 ## System Requirements
-Ubuntu 20.04 with Python3.8+
+Ubuntu 18.04/20.04 with Python3.8+
+
+**Warning:** autograder is configured with AWS EC2 running Ubuntu 18.04 AMI,
+using prepared statements (e.g. `pqxx::worker::exec_prepared()`) may cause compilation error
 
 ## Development Setup
 ### Local PostgreSQL

@@ -3,6 +3,7 @@
 #include <sstream>
 #include <map>
 #include <utility>
+#include <iomanip>
 
 void display_query_results(pqxx::result& r, std::string fieldNames){
   std::cout << fieldNames << std::endl;
@@ -11,6 +12,24 @@ void display_query_results(pqxx::result& r, std::string fieldNames){
       std::cout << field->c_str() << " ";
     }
     std::cout << std::endl;
+  }
+}
+
+void display_query1_results(pqxx::result& r, std::string fieldNames){
+  std::cout << fieldNames << std::endl;
+  for (auto row = r.begin(); row != r.end(); row++) {
+    std::cout << row[0].as<int>() << " " 
+      << row[1].as<int>() << " " 
+      << row[2].as<int>() << " " 
+      << row[3].as<string>() << " " 
+      << row[4].as<string>() << " "
+      << row[5].as<int>() << " " 
+      << row[6].as<int>() << " " 
+      << row[7].as<int>() << " " 
+      << row[8].as<int>() << " " << fixed << setprecision(1)
+      << row[9].as<double>() << " " 
+      << row[10].as<double>() 
+      << std::endl;
   }
 }
 
@@ -122,7 +141,8 @@ void query1(connection *C,
 
   pqxx::result r = run_static_prepared_statement(C, "query1", ss.str());
   std::string header = "PLAYER_ID TEAM_ID UNIFORM_NUM FIRST_NAME LAST_NAME MPG PPG RPG APG SPG BPG";
-  display_query_results(r, header);
+  // display_query_results(r, header);
+  display_query1_results(r, header);
 }
 
 void query2(connection *C, string team_color)

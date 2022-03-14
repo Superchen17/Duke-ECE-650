@@ -10,6 +10,8 @@ using namespace pqxx;
 
 void display_query_results(pqxx::result& r, std::string fieldNames);
 
+void display_query1_results(pqxx::result& r, std::string fieldNames);
+
 pqxx::result run_static_prepared_statement(connection* C, std::string queryName, std::string queryString);
 
 void add_player(connection *C, int team_id, int jersey_num, string first_name, string last_name,
