@@ -111,7 +111,7 @@ void query1(connection *C,
     {"bpg", use_bpg},
   };
 
-  std::map<std::string, std::pair<int, int> > filterBounds = {
+  std::map<std::string, std::pair<double, double> > filterBounds = {
     {"mpg", std::make_pair(min_mpg, max_mpg)},
     {"ppg", std::make_pair(min_ppg, max_ppg)},
     {"rpg", std::make_pair(min_rpg, max_rpg)},
@@ -127,7 +127,7 @@ void query1(connection *C,
   int counter = 0;
   for(auto const& domain: filterDomain){
     if(domain.second == 1){
-      std::pair<int, int> bounds = filterBounds[domain.first];
+      std::pair<double, double> bounds = filterBounds[domain.first];
       if(counter == 0){
         ss << "WHERE ";
       }

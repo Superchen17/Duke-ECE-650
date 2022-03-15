@@ -111,7 +111,7 @@ void query1(connection *C,
     {"bpg", use_bpg},
   };
 
-  std::map<std::string, std::pair<int, int> > filterBounds = {
+  std::map<std::string, std::pair<double, double> > filterBounds = {
     {"mpg", std::make_pair(min_mpg, max_mpg)},
     {"ppg", std::make_pair(min_ppg, max_ppg)},
     {"rpg", std::make_pair(min_rpg, max_rpg)},
@@ -127,7 +127,7 @@ void query1(connection *C,
   int counter = 0;
   for(auto const& domain: filterDomain){
     if(domain.second == 1){
-      std::pair<int, int> bounds = filterBounds[domain.first];
+      std::pair<double, double> bounds = filterBounds[domain.first];
       if(counter == 0){
         ss << "WHERE ";
       }
@@ -141,7 +141,6 @@ void query1(connection *C,
 
   pqxx::result r = run_static_prepared_statement(C, "query1", ss.str());
   std::string header = "PLAYER_ID TEAM_ID UNIFORM_NUM FIRST_NAME LAST_NAME MPG PPG RPG APG SPG BPG";
-  // display_query_results(r, header);
   display_query1_results(r, header);
 }
 
