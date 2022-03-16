@@ -1,11 +1,99 @@
 from sqlalchemy import create_engine
 from sqlalchemy import and_
+from sqlalchemy import insert
 from sqlalchemy.orm import sessionmaker
 
 from models import Color, State, Team, Player
 
 engine = create_engine('postgresql://postgres:passw0rd@localhost:5432/ACC_BBALL')
 session = sessionmaker(bind=engine)()
+
+def purge_and_create_tables():
+    '''create tables from model, drop first if exists
+    
+    '''
+    if engine.dialect.has_table(engine.connect(), "player"):
+        Player.__table__.drop(engine)
+    if engine.dialect.has_table(engine.connect(), "team"):
+        Team.__table__.drop(engine)
+    if engine.dialect.has_table(engine.connect(), "state"):
+        State.__table__.drop(engine)
+    if engine.dialect.has_table(engine.connect(), "color"):
+        Color.__table__.drop(engine)
+
+    Color.__table__.create(engine)
+    State.__table__.create(engine)
+    Team.__table__.create(engine)
+    Player.__table__.create(engine)
+    return
+
+def populate_table_color():
+    with open('color.txt') as f:
+        lines = f.readlines()
+        for line in lines:
+            line = line.replace("\n", "")
+            attributes = line.split(" ")
+            query = insert(Color).values(name=attributes[1])
+            with engine.connect() as conn:
+                conn.execute(query)
+    return
+
+def populate_table_state():
+    with open('state.txt') as f:
+        lines = f.readlines()
+        for line in lines:
+            line = line.replace("\n", "")
+            attributes = line.split(" ")
+            query = insert(State).values(name=attributes[1])
+            with engine.connect() as conn:
+                conn.execute(query)
+    return
+
+def populate_table_team():
+    with open('team.txt') as f:
+        lines = f.readlines()
+        for line in lines:
+            line = line.replace("\n", "")
+            attributes = line.split(" ")
+            query = insert(Team).values(
+                name=attributes[1], 
+                state_id=attributes[2], 
+                color_id=attributes[3], 
+                wins=attributes[4],
+                losses=attributes[5]
+            )
+            with engine.connect() as conn:
+                conn.execute(query)
+    return
+
+def populate_table_player():
+    with open('player.txt') as f:
+        lines = f.readlines()
+        for line in lines:
+            line = line.replace("\n", "")
+            attributes = line.split(" ")
+            query = insert(Player).values(
+                team_id=attributes[1], 
+                uniform_num=attributes[2], 
+                first_name=attributes[3], 
+                last_name=attributes[4],
+                mpg=attributes[5],
+                ppg=attributes[6],
+                rpg=attributes[7],
+                apg=attributes[8],
+                spg=attributes[9],
+                bpg=attributes[10]
+            )
+            with engine.connect() as conn:
+                conn.execute(query)
+    return
+
+def populate_tables():
+    populate_table_color()
+    populate_table_state()
+    populate_table_team()
+    populate_table_player()
+    return
 
 def query1(
 		use_mpg, min_mpg, max_mpg,
@@ -43,7 +131,7 @@ def query2(team_color):
 	color = session.query(Color).filter(Color.name == team_color)[0]
 	teams = session.query(Team).filter(Team.color_id == color.color_id)
 
-	print('Name')
+	print('NAME')
 	for team in teams:
 		print(team.name)
 	return
@@ -83,15 +171,22 @@ def query5(num_wins):
 		print(player.first_name, player.last_name, playerTeam.name, playerTeam.wins)
 	return
 
-query1(
-    1, 33, 40,
-    1, 15, 25,
-    1, 3, 8,
-    1, 0, 4,
-    1, 0.3, 1.5, 
-    1, 0.6, 2.2
-)
-query2('Orange')
-query3('VirginiaTech')
-query4("MA", "Maroon")
-query5(10)
+def try_run_testcases():
+    query1(
+        1, 33, 40,
+        1, 15, 25,
+        1, 3, 8,
+        1, 0, 4,
+        1, 0.3, 1.5, 
+        1, 0.6, 2.2
+    )
+    query2('Orange')
+    query3('VirginiaTech')
+    query4("MA", "Maroon")
+    query5(10)
+    return 
+
+if __name__ == '__main__':
+    purge_and_create_tables()
+    populate_tables()
+    try_run_testcases()
