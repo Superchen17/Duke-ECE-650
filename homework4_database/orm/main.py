@@ -35,7 +35,7 @@ def query1(
 		print(player.player_id, player.team_id, player.uniform_num, 
 			player.first_name, player.last_name, 
 			player.mpg, player.ppg, player.rpg, player.apg,	
-			player.spg, player.bpg
+			"{:.1f}".format(player.spg), "{:.1f}".format(player.bpg)
 		)
 	return 
 
@@ -50,7 +50,7 @@ def query2(team_color):
 
 def query3(team_name):
 	team = session.query(Team).filter(Team.name == team_name)[0]
-	players = session.query(Player).filter(Player.team_id == team.team_id)
+	players = session.query(Player).filter(Player.team_id == team.team_id).order_by(Player.ppg.desc())
 
 	print('FIRST_NAME LAST_NAME')
 	for player in players:
@@ -67,9 +67,9 @@ def query4(team_state, team_color):
 	teamIdsofState = [team.team_id for team in teams]
 	players = session.query(Player).filter(Player.team_id.in_(teamIdsofState))	
 
-	print('FIRST_NAME LAST_NAME UNIFORM_NUM')
+	print('UNIFORM_NUM FIRST_NAME LAST_NAME')
 	for player in players:
-		print(player.first_name, player.last_name, player.uniform_num)
+		print(player.uniform_num, player.first_name, player.last_name)
 	return
 
 def query5(num_wins):
@@ -83,15 +83,15 @@ def query5(num_wins):
 		print(player.first_name, player.last_name, playerTeam.name, playerTeam.wins)
 	return
 
-query1( 
-    1, 35, 40, 
-    0, 0, 0, 
-    0, 5, 10, 
-    0, 0, 0, 
-    0, 0, 0, 
-    0, 0, 0
-  )
-query2('Maroon')
+query1(
+    1, 33, 40,
+    1, 15, 25,
+    1, 3, 8,
+    1, 0, 4,
+    1, 0.3, 1.5, 
+    1, 0.6, 2.2
+)
+query2('Orange')
 query3('VirginiaTech')
 query4("MA", "Maroon")
 query5(10)

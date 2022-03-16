@@ -12,7 +12,7 @@ void exercise(connection *C)
   );
 
   query2(C, "Orange");
-  query3(C, "Clemson");
+  query3(C, "VirginiaTech");
   query4(C, "MA", "Maroon");
   query5(C, 10);
 }

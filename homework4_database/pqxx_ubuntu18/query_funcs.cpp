@@ -176,7 +176,7 @@ void query3(connection *C, string team_name)
 void query4(connection *C, string team_state, string team_color)
 {
   std::stringstream ss;
-  ss << "SELECT p.first_name, p.last_name, p.uniform_num" << std::endl;
+  ss << "SELECT p.uniform_num, p.first_name, p.last_name" << std::endl;
   ss << "FROM player p" << std::endl;
   ss << "INNER JOIN team t" << std::endl;
   ss << "ON p.team_id = t.team_id" << std::endl;
@@ -188,7 +188,7 @@ void query4(connection *C, string team_state, string team_color)
   ss << "AND c.name = \'" << team_color << "\'" << std::endl;
 
   pqxx::result r = run_static_prepared_statement(C, "query4", ss.str());
-  std::string header = "FIRST_NAME LAST_NAME UNIFORM_NUM";
+  std::string header = "UNIFORM_NUM FIRST_NAME LAST_NAME";
   display_query_results(r, header);
 }
 
