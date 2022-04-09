@@ -1,0 +1,15 @@
+# IDE settings
+.vscode
+
+# generated builds
+*.o 
+*~ 
+core 
+.depend 
+.*.cmd 
+*.order 
+*.symvers 
+*.ko 
+*.mod.c 
+*.mod
+sneaky_process
