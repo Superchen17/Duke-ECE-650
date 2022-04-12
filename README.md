@@ -3,3 +3,4 @@
 2. [Custom Multithreaded Malloc Library](homework2_threaded_malloc)
 3. [A Game of Hot Potato - TCP Programming](homework3_tcp)
 4. [Basketball Statistics - Database Programming](homework4_database)
+5. [Rootkit - Kernel Programming](homework5_rootkit)
