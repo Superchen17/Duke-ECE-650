@@ -2,6 +2,7 @@
 .vscode
 
 # generated builds
+*.zip
 *.o 
 *~ 
 core 
